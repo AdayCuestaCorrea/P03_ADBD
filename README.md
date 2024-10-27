@@ -79,3 +79,183 @@ vivero.
 
 **Gestión**
 - Descripción: Relaciona al empleado con el pedido, de tal manera que un empleado puede haber gestionado 0 o más pedidos (0:N) y un pedido es gestionado por un solo empleado (1:1)
+
+## Imagen del modelo E/R
+![modelo_er](https://github.com/AdayCuestaCorrea/P03_ADBD/blob/main/Modelo_ER/DiagramaER_Viveros_2.png)
+
+## Modelo Relaciona
+En cuanto al modelo relacional, hemos convertido el modelo Entidad/Relación paso a paso y hemos conseguido lo siguiente:
+
+**Vivero**
+- **Nombre_Vivero**: 
+  - PRIMARY KEY
+  - NOT NULL
+  - VARCHAR(100)
+- **Latitud_Vivero**: 
+  - NOT NULL
+  - NUMERIC(10, 7)
+- **Longitud_Vivero**: 
+  - NOT NULL
+  - NUMERIC(10, 7)
+
+---
+
+**Zona**
+- **Nombre_Vivero**: 
+  - PRIMARY KEY, UNIQUE
+  - FOREIGN KEY de Vivero(Nombre_Vivero)
+  - NOT NULL
+  - ON DELETE CASCADE
+  - ON UPDATE CASCADE
+  - VARCHAR(100)
+- **Nombre_Zona**:
+  - PRIMARY KEY, UNIQUE
+  - NOT NULL
+  - VARCHAR(100)
+- **Latitud_Zona**:
+  - NOT NULL
+  - NUMERIC(10, 7)
+- **Longitud_Zona**:
+  - NOT NULL
+  - NUMERIC(10, 7)
+
+---
+
+**ClientesPlus**
+- **DNI**:
+  - PRIMARY KEY
+  - NOT NULL
+  - CHAR(9)
+- **Nombre**:
+  - NOT NULL
+  - VARCHAR(100)
+- **Fecha_Ingreso**:
+  - NOT NULL
+  - DATE
+- **Bonificación**:
+  - Puede ser nula, dependerá de compras realizadas
+  - NUMERIC(5, 2)
+  - CHECK (Bonificación >= 0)
+
+---
+
+**Pedido**
+- **Número_Pedido**:
+  - PRIMARY KEY
+  - NOT NULL
+  - INTEGER
+- **Fecha**:
+  - NOT NULL
+  - DATE
+  - CHECK (Fecha <= CURRENT_DATE)
+- **Cantidad**:
+  - NOT NULL
+  - INTEGER
+  - CHECK (Cantidad > 0)
+- **DNI**:
+  - FOREIGN KEY de ClientesPlus(DNI)
+  - NOT NULL
+  - ON DELETE SET NULL
+  - ON UPDATE CASCADE
+  - CHAR(9)
+- **Identificación**:
+  - FOREIGN KEY de Empleado(Identificación)
+  - NOT NULL
+  - ON DELETE SET NULL
+  - INTEGER
+
+---
+
+**Productos**
+- **Nombre_Producto**:
+  - PRIMARY KEY
+  - NOT NULL
+  - VARCHAR(100)
+- **Cantidad**:
+  - NOT NULL
+  - INTEGER
+  - CHECK (Cantidad >= 0)
+
+---
+
+**Empleado**
+- **Identificación**:
+  - PRIMARY KEY
+  - NOT NULL
+  - INTEGER
+  - CHECK (Identificación >= 0 AND Identificación <= 999999)
+- **Nombre**:
+  - NOT NULL
+  - VARCHAR(100)
+
+---
+
+**Empleado_Trabaja_Zona**
+- **Nombre_Vivero**:
+  - PRIMARY KEY
+  - FOREIGN KEY de Zona(Nombre_Vivero)
+  - NOT NULL
+  - ON DELETE CASCADE
+  - ON UPDATE CASCADE
+  - VARCHAR(100)
+- **Nombre_Zona**:
+  - PRIMARY KEY
+  - FOREIGN KEY de Zona(Nombre_Zona)
+  - NOT NULL
+  - ON DELETE CASCADE
+  - ON UPDATE CASCADE
+  - VARCHAR(100)
+- **Identificación**:
+  - PRIMARY KEY
+  - FOREIGN KEY de Empleado(Identificación)
+  - NOT NULL
+  - ON DELETE SET NULL
+  - ON UPDATE CASCADE
+  - INTEGER
+- **Época_Año**:
+  - NOT NULL
+  - VARCHAR(10)
+  - CHECK (Época_Año IN ('Primavera', 'Verano', 'Otoño', 'Invierno'))
+
+---
+
+**Zona_Produce_Productos**
+- **Nombre_Vivero**:
+  - PRIMARY KEY
+  - FOREIGN KEY de Zona(Nombre_Vivero)
+  - NOT NULL
+  - ON DELETE CASCADE
+  - ON UPDATE CASCADE
+  - VARCHAR(100)
+- **Nombre_Zona**:
+  - PRIMARY KEY
+  - FOREIGN KEY de Zona(Nombre_Zona)
+  - NOT NULL
+  - ON DELETE CASCADE
+  - ON UPDATE CASCADE
+  - VARCHAR(100)
+- **Nombre_Producto**:
+  - PRIMARY KEY
+  - FOREIGN KEY de Productos(Nombre_Producto)
+  - NOT NULL
+  - ON DELETE CASCADE
+  - ON UPDATE CASCADE
+  - VARCHAR(100)
+
+---
+
+**Pedido_Contiene_Productos**
+- **Número_Pedido**:
+  - PRIMARY KEY
+  - FOREIGN KEY de Pedido(Número_Pedido)
+  - NOT NULL
+  - ON DELETE CASCADE
+  - ON UPDATE CASCADE
+  - INTEGER
+- **Nombre_Producto**:
+  - PRIMARY KEY
+  - FOREIGN KEY de Productos(Nombre_Producto)
+  - NOT NULL
+  - ON DELETE SET NULL
+  - ON UPDATE CASCADE
+  - VARCHAR(100)
