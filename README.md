@@ -112,6 +112,7 @@ En cuanto al modelo relacional, hemos convertido el modelo Entidad/Relación pas
   - PRIMARY KEY, UNIQUE
   - NOT NULL
   - VARCHAR(100)
+  - CHECK (NOMBRE_VIVERO <> NOMBRE_ZONA)
 - **Latitud_Zona**:
   - NOT NULL
   - NUMERIC(10, 7)
