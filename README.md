@@ -59,7 +59,7 @@ vivero.
   - Fecha de Ingreso: Fecha en que el cliente se registró como cliente plus.
     - Ejemplo: 2022-05-20
   - Bonificación: Porcentaje de descuento aplicable por ser cliente plus, es un **atributo calculado**.
-    - Ejemplo: 1.0 (Qué es lo mismo que decir 10%)
+    - Ejemplo: 1.0 (Qué es lo mismo que decir 100%)
    
 ## Descripción de cada una de las relaciones definidas
 **Tiene**
@@ -133,8 +133,9 @@ En cuanto al modelo relacional, hemos convertido el modelo Entidad/Relación pas
   - NOT NULL
   - DATE
 - **Bonificación**:
-  - Puede ser nula, dependerá de compras realizadas
-  - NUMERIC(5, 2)
+  - NOT NULL
+  - NUMERIC(3, 2)
+  - DEFAULT 0
   - CHECK (Bonificación >= 0)
 
 ---
@@ -259,3 +260,8 @@ En cuanto al modelo relacional, hemos convertido el modelo Entidad/Relación pas
   - ON DELETE SET NULL
   - ON UPDATE CASCADE
   - VARCHAR(100)
+
+## Eliminaciones y restricciones
+- **Restricciones de no nulo:** Sólo los atributos que son esenciales para la identidad de las entidades y que no deben perderse con eliminaciones (p. ej., Nombre_Vivero, Nombre_Zona, Identificación) se configuran como NOT NULL.
+- **Restricciones de eliminación en cascada:** Útil para las relaciones entre Zona, Zona_Produce_Productos, y Empleado_Trabaja_Zona donde la eliminación de un vivero o zona debe propagar la eliminación.
+- **Asignación de valores nulos en caso de eliminación:** Los pedidos pueden perder referencia al cliente o empleado y quedar como históricos.
