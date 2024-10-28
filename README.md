@@ -270,3 +270,49 @@ En cuanto al modelo relacional, hemos convertido el modelo Entidad/Relación pas
 - **Restricciones de no nulo:** Sólo los atributos que son esenciales para la identidad de las entidades y que no deben perderse con eliminaciones (p. ej., Nombre_Vivero, Nombre_Zona, Identificación) se configuran como NOT NULL.
 - **Restricciones de eliminación en cascada:** Útil para las relaciones entre Zona, Zona_Produce_Productos, y Empleado_Trabaja_Zona donde la eliminación de un vivero o zona debe propagar la eliminación.
 - **Asignación de valores nulos en caso de eliminación:** Los pedidos pueden perder referencia al cliente o empleado y quedar como históricos.
+
+## Eliminaciones en la base de Datos
+
+```postgresql
+vivero=# SELECT * FROM ZONA;
+   nombre_vivero   |  nombre_zona   | latitud_zona | longitud_zona 
+-------------------+----------------+--------------+---------------
+ La Orotava        | Zona Norte     |   28.3910000 |   -16.5220000
+ Santa Cruz        | Zona Este      |   28.4690000 |   -16.2530000
+ Adeje             | Zona Sur       |   28.1230000 |   -16.7250000
+ Puerto de la Cruz | Zona Oeste     |   28.4150000 |   -16.5430000
+ La Laguna         | Zona Central   |   28.4880000 |   -16.3140000
+ La Laguna         | Patio Exterior |   28.4870000 |   -16.4000000
+(6 rows)
+
+vivero=# SELECT * FROM VIVERO;
+   nombre_vivero   | latitud_vivero | longitud_vivero 
+-------------------+----------------+-----------------
+ La Orotava        |     28.3905000 |     -16.5231000
+ Santa Cruz        |     28.4682000 |     -16.2546000
+ Adeje             |     28.1227000 |     -16.7260000
+ Puerto de la Cruz |     28.4142000 |     -16.5448000
+ La Laguna         |     28.4874000 |     -16.3159000
+(5 rows)
+
+vivero=# DELETE FROM VIVERO WHERE NOMBRE_VIVERO = 'Puerto de la Cruz';
+DELETE 1
+vivero=# SELECT * FROM VIVERO;
+ nombre_vivero | latitud_vivero | longitud_vivero 
+---------------+----------------+-----------------
+ La Orotava    |     28.3905000 |     -16.5231000
+ Santa Cruz    |     28.4682000 |     -16.2546000
+ Adeje         |     28.1227000 |     -16.7260000
+ La Laguna     |     28.4874000 |     -16.3159000
+(4 rows)
+
+vivero=# SELECT * FROM ZONA;
+ nombre_vivero |  nombre_zona   | latitud_zona | longitud_zona 
+---------------+----------------+--------------+---------------
+ La Orotava    | Zona Norte     |   28.3910000 |   -16.5220000
+ Santa Cruz    | Zona Este      |   28.4690000 |   -16.2530000
+ Adeje         | Zona Sur       |   28.1230000 |   -16.7250000
+ La Laguna     | Zona Central   |   28.4880000 |   -16.3140000
+ La Laguna     | Patio Exterior |   28.4870000 |   -16.4000000
+(5 rows)
+```
