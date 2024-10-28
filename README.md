@@ -83,7 +83,7 @@ vivero.
 ## Imagen del modelo E/R
 ![modelo_er](https://github.com/AdayCuestaCorrea/P03_ADBD/blob/main/Modelo_ER/DiagramaER_Viveros_2.png)
 
-## Modelo Relaciona
+## Modelo Relacional
 En cuanto al modelo relacional, hemos convertido el modelo Entidad/Relación paso a paso y hemos conseguido lo siguiente:
 
 **Vivero**
@@ -276,6 +276,26 @@ En cuanto al modelo relacional, hemos convertido el modelo Entidad/Relación pas
 - **Asignación de valores nulos en caso de eliminación:** Los pedidos pueden perder referencia al cliente o empleado y quedar como históricos.
 - **Checks:** A la hora de crear las tablas hemos tenido en cuenta varias restricciones para algunos atributos que hemos cumplido gracias al uso de checks, por ejemplo la bonificación tiene que ser un valor mayor que 0, así como la cantidad en los pedidos o productos. Por otro lado tenemos también checks para que las fechas no puedan ser posteriores a la fecha del sistema. Otro caso es el check de la Época del año, que solo puede tomar como valores Primavera, Verano, Otoño e Invierno. Por último la identificación es un número entre 0 y 999999
 - **Disparadores:** Para el **atributo calculado** he creado un disparador que calcula la suma de los pedidos realizados por el cliente el mes en el que nos encontramos (el del sistema) y lo multiplica por 0.01, siendo el máximo valor un 1.0 (que es lo mismo que un 100% de bonificación). Cada vez que se añade una nueva entrada a la tabla de pedido se ejecuta este disparador. También creé un disparador que pone la bonificación de los nuevos cliente a 0, independientemente de si el usuario ha creado al cliente con una bonificación inicial de 1. Por último creé otro disparador que obliga a que la fecha del pedido no pueda ser menor a la fecha de ingreso del cliente en la base de datos.
+
+## Tablas de la base de datos originalmente
+
+![vivero](https://github.com/AdayCuestaCorrea/P03_ADBD/blob/main/Tablas/Vivero.png)
+
+![zona](https://github.com/AdayCuestaCorrea/P03_ADBD/blob/main/Tablas/Zona.png)
+
+![ClientesPlus](https://github.com/AdayCuestaCorrea/P03_ADBD/blob/main/Tablas/ClientesPlus.png)
+
+![Pedido](https://github.com/AdayCuestaCorrea/P03_ADBD/blob/main/Tablas/Pedido.png)
+
+![Productos](https://github.com/AdayCuestaCorrea/P03_ADBD/blob/main/Tablas/Productos.png)
+
+![Empleado](https://github.com/AdayCuestaCorrea/P03_ADBD/blob/main/Tablas/Empleado.png)
+
+![Empleado_Trabaja_Zona](https://github.com/AdayCuestaCorrea/P03_ADBD/blob/main/Tablas/Empleado_Trabaja_Zona.png)
+
+![Zona_Produce_Productos](https://github.com/AdayCuestaCorrea/P03_ADBD/blob/main/Tablas/Zona_Produce_Productos.png)
+
+![Pedido_Contiene_Productos](https://github.com/AdayCuestaCorrea/P03_ADBD/blob/main/Tablas/Pedido_Contiene_Productos.png)
 
 ## Eliminaciones en la base de Datos
 
