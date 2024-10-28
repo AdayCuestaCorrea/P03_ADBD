@@ -94,9 +94,11 @@ En cuanto al modelo relacional, hemos convertido el modelo Entidad/Relación pas
 - **Latitud_Vivero**: 
   - NOT NULL
   - NUMERIC(10, 7)
+  - CHECK (LATITUD_VIVERO BETWEEN -90 AND 90)
 - **Longitud_Vivero**: 
   - NOT NULL
   - NUMERIC(10, 7)
+  -  CHECK (LONGITUD_VIVERO BETWEEN -180 AND 180)
 
 ---
 
@@ -116,9 +118,11 @@ En cuanto al modelo relacional, hemos convertido el modelo Entidad/Relación pas
 - **Latitud_Zona**:
   - NOT NULL
   - NUMERIC(10, 7)
+  - CHECK (LATITUD_ZONA BETWEEN -90 AND 90)
 - **Longitud_Zona**:
   - NOT NULL
   - NUMERIC(10, 7)
+  - CHECK (LONGITUD_ZONA BETWEEN -180 AND 180)
 
 ---
 
