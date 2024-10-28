@@ -275,7 +275,7 @@ En cuanto al modelo relacional, hemos convertido el modelo Entidad/Relación pas
 
 ## Eliminaciones en la base de Datos
 
-- En la base de datos hemos eliminado uno de los viveros y vemos como esta eliminación se propaga hacia las demás tablas debido a la eliminación en cascada.
+- En la base de datos hemos eliminado uno de los viveros y vemos como esta eliminación se propaga hacia las demás tablas debido a la eliminación en cascada, como esto provoca que se elimine una zona, la eliminación de la zona también se propaga en cascada.
 
 **Eliminación de un vivero:**
 
