@@ -121,10 +121,12 @@ En cuanto al modelo relacional, hemos convertido el modelo Entidad/Relación pas
   - NOT NULL
   - NUMERIC(10, 7)
   - CHECK (LATITUD_ZONA BETWEEN -90 AND 90)
+  - UNIQUE
 - **Longitud_Zona**:
   - NOT NULL
   - NUMERIC(10, 7)
   - CHECK (LONGITUD_ZONA BETWEEN -180 AND 180)
+  - UNIQUE
 
 ---
 
@@ -570,4 +572,306 @@ vivero=# SELECT * FROM PEDIDO;
              6 | 2024-10-28 |        3 | 12345678A |               
              1 | 2022-06-05 |       15 |           |               
 (6 rows)
+```
+
+## Inserciones erróneas
+
+Aclarar que no voy a hacer pruebas con todos los atributos que no pueden tomar valores nulos porque, si nos fijamos en el modelo relacional, prácticamente todos tienen que tener valor si o si.
+
+**Vivero:**
+
+1. Repetimos una de las claves primarias
+2. Repetimos latitud y longitud
+3. Latitud incorrecta
+4. Longitud incorrecta
+
+```postgresql
+vivero=# SELECT * FROM VIVERO;
+ nombre_vivero | latitud_vivero | longitud_vivero 
+---------------+----------------+-----------------
+ La Orotava    |     28.3905000 |     -16.5231000
+ Santa Cruz    |     28.4682000 |     -16.2546000
+ Adeje         |     28.1227000 |     -16.7260000
+ La Laguna     |     28.4874000 |     -16.3159000
+
+vivero=# INSERT INTO VIVERO (NOMBRE_VIVERO, LATITUD_VIVERO, LONGITUD_VIVERO) VALUES ('Adeje', 14.8653, 79.312);
+ERROR:  duplicate key value violates unique constraint "vivero_pkey"
+DETAIL:  Key (nombre_vivero)=(Adeje) already exists.
+
+vivero=# INSERT INTO VIVERO (NOMBRE_VIVERO, LATITUD_VIVERO, LONGITUD_VIVERO) VALUES ('Los Andenes', 28.3905, -16.5231);
+ERROR:  duplicate key value violates unique constraint "unique_latitud_longitud"
+DETAIL:  Key (latitud_vivero, longitud_vivero)=(28.3905000, -16.5231000) already exists.
+
+vivero=# INSERT INTO VIVERO (NOMBRE_VIVERO, LATITUD_VIVERO, LONGITUD_VIVERO) VALUES ('Los Andenes', -90.3905, -16.5231);
+ERROR:  new row for relation "vivero" violates check constraint "vivero_latitud_vivero_check"
+DETAIL:  Failing row contains (Los Andenes, -90.3905000, -16.5231000).
+
+vivero=# INSERT INTO VIVERO (NOMBRE_VIVERO, LATITUD_VIVERO, LONGITUD_VIVERO) VALUES ('Los Andenes', 28.3905, -180.5231);
+ERROR:  new row for relation "vivero" violates check constraint "vivero_longitud_vivero_check"
+DETAIL:  Failing row contains (Los Andenes, 28.3905000, -180.5231000).
+```
+
+**Zona:**
+
+1. Repetimos las claves primarias
+2. Latitud incorrecta
+3. Longitud incorrecta
+4. Repetimos latitud y longitud
+5. Vivero no existente
+
+```postgresql
+vivero=# SELECT * FROM ZONA;
+ nombre_vivero |  nombre_zona   | latitud_zona | longitud_zona 
+---------------+----------------+--------------+---------------
+ La Orotava    | Zona Norte     |   28.3910000 |   -16.5220000
+ Santa Cruz    | Zona Este      |   28.4690000 |   -16.2530000
+ Adeje         | Zona Sur       |   28.1230000 |   -16.7250000
+ La Laguna     | Zona Central   |   28.4880000 |   -16.3140000
+ La Laguna     | Patio Exterior |   28.4870000 |   -16.4000000
+
+vivero=# INSERT INTO ZONA (NOMBRE_VIVERO, NOMBRE_ZONA, LATITUD_ZONA, LONGITUD_ZONA) VALUES ('La Orotava', 'Zona Norte', 28.15, 15);
+ERROR:  duplicate key value violates unique constraint "zona_pkey"
+DETAIL:  Key (nombre_vivero, nombre_zona)=(La Orotava, Zona Norte) already exists.
+
+vivero=# INSERT INTO ZONA (NOMBRE_VIVERO, NOMBRE_ZONA, LATITUD_ZONA, LONGITUD_ZONA) VALUES ('La Orotava', 'Zona Sur', -90.15, 15);
+ERROR:  new row for relation "zona" violates check constraint "zona_latitud_zona_check"
+DETAIL:  Failing row contains (La Orotava, Zona Sur, -90.1500000, 15.0000000).
+
+vivero=# INSERT INTO ZONA (NOMBRE_VIVERO, NOMBRE_ZONA, LATITUD_ZONA, LONGITUD_ZONA) VALUES ('La Orotava', 'Zona Sur', 90,
+ -180.1);
+ERROR:  new row for relation "zona" violates check constraint "zona_longitud_zona_check"
+DETAIL:  Failing row contains (La Orotava, Zona Sur, 90.0000000, -180.1000000).
+
+vivero=# INSERT INTO ZONA (NOMBRE_VIVERO, NOMBRE_ZONA, LATITUD_ZONA, LONGITUD_ZONA) VALUES ('La Orotava', 'Zona Sur', 28.3910000, -16.5220000);
+ERROR:  duplicate key value violates unique constraint "unique_latitud_longitud_zona"
+DETAIL:  Key (latitud_zona, longitud_zona)=(28.3910000, -16.5220000) already exists.
+
+vivero=# INSERT INTO ZONA (NOMBRE_VIVERO, NOMBRE_ZONA, LATITUD_ZONA, LONGITUD_ZONA) VALUES ('Las Galletas', 'Zona Norte',
+ 28.15, 15);
+ERROR:  insert or update on table "zona" violates foreign key constraint "zona_nombre_vivero_fkey"
+DETAIL:  Key (nombre_vivero)=(Las Galletas) is not present in table "vivero".
+```
+
+**ClientesPlus:**
+
+1. Repetimo la clave primaria
+2. Fecha de ingreso posterior a la fecha actual (28/10/2024)
+3. Bonificación menor que 0 (Vemos como gracias al disparador se pone a 0)
+
+```postgresql
+vivero=# SELECT * FROM CLIENTESPLUS;
+    dni    |     nombre      | fecha_ingreso | bonificacion 
+-----------+-----------------+---------------+--------------
+ 11223344C | Daniel Azañón   | 2021-12-01    |         0.00
+ 55667788E | Luis Fernández  | 2023-10-01    |         0.00
+ 87654321B | Aday Cuesta     | 2024-10-25    |         0.05
+ 12345678A | Daniel Carvajal | 2024-10-15    |         0.13
+(4 rows)
+
+vivero=# INSERT INTO CLIENTESPLUS (DNI, NOMBRE, FECHA_INGRESO) VALUES ('11223344C', 'Juan', '2021-12-01');
+ERROR:  duplicate key value violates unique constraint "clientesplus_pkey"
+DETAIL:  Key (dni)=(11223344C) already exists.
+
+vivero=# INSERT INTO CLIENTESPLUS (DNI, NOMBRE, FECHA_INGRESO) VALUES ('11223344D', 'Juan', '2025-01-01');
+ERROR:  new row for relation "clientesplus" violates check constraint "clientesplus_fecha_ingreso_check"
+DETAIL:  Failing row contains (11223344D, Juan, 2025-01-01, 0.00).
+
+vivero=# INSERT INTO CLIENTESPLUS (DNI, NOMBRE, FECHA_INGRESO, BONIFICACION) VALUES ('11223344D', 'Juan', '2021-12-01', -
+1);
+INSERT 0 1
+vivero=# SELECT * FROM CLIENTESPLUS;
+    dni    |     nombre      | fecha_ingreso | bonificacion 
+-----------+-----------------+---------------+--------------
+ 11223344C | Daniel Azañón   | 2021-12-01    |         0.00
+ 55667788E | Luis Fernández  | 2023-10-01    |         0.00
+ 87654321B | Aday Cuesta     | 2024-10-25    |         0.05
+ 12345678A | Daniel Carvajal | 2024-10-15    |         0.13
+ 11223344D | Juan            | 2021-12-01    |         0.00
+(5 rows)
+```
+
+**Pedido:**
+
+1. Repetición de clave primaria
+2. Fecha superior a la actual
+3. Cantidad nula
+4. DNI no existente en la base de datos
+5. Identificación no existente en la base de datos
+
+```postgresql
+vivero=# SELECT * FROM PEDIDO;
+ numero_pedido |   fecha    | cantidad |    dni    | identificacion 
+---------------+------------+----------+-----------+----------------
+             2 | 2023-07-10 |       20 | 11223344C |         345678
+             3 | 2023-10-02 |        8 | 55667788E |         567890
+             5 | 2024-10-27 |        5 | 87654321B |         234567
+             4 | 2024-10-17 |       10 | 12345678A |               
+             6 | 2024-10-28 |        3 | 12345678A |               
+             1 | 2022-06-05 |       15 |           |               
+(6 rows)
+
+vivero=# INSERT INTO PEDIDO (NUMERO_PEDIDO, FECHA, CANTIDAD, DNI, IDENTIFICACION) VALUES (2, '2023-07-05', 17, '11223344D
+', 345678);
+ERROR:  duplicate key value violates unique constraint "pedido_pkey"
+DETAIL:  Key (numero_pedido)=(2) already exists.
+
+vivero=# INSERT INTO PEDIDO (NUMERO_PEDIDO, FECHA, CANTIDAD, DNI, IDENTIFICACION) VALUES (7, '2025-07-05', 17, '11223344D
+', 345678);
+ERROR:  new row for relation "pedido" violates check constraint "pedido_fecha_check"
+DETAIL:  Failing row contains (7, 2025-07-05, 17, 11223344D, 345678).
+
+vivero=# INSERT INTO PEDIDO (NUMERO_PEDIDO, FECHA) VALUES (7, '2023-07-05');
+ERROR:  null value in column "cantidad" of relation "pedido" violates not-null constraint
+DETAIL:  Failing row contains (7, 2023-07-05, null, null, null).
+
+vivero=# INSERT INTO PEDIDO (NUMERO_PEDIDO, FECHA, CANTIDAD, DNI, IDENTIFICACION) VALUES (7, '2023-07-05', 17, '11223344Z', 345678);
+ERROR:  insert or update on table "pedido" violates foreign key constraint "pedido_dni_fkey"
+DETAIL:  Key (dni)=(11223344Z) is not present in table "clientesplus".
+
+vivero=# INSERT INTO PEDIDO (NUMERO_PEDIDO, FECHA, CANTIDAD, DNI, IDENTIFICACION) VALUES (7, '2023-07-05', 17, '11223344D', 11111);
+ERROR:  insert or update on table "pedido" violates foreign key constraint "pedido_identificacion_fkey"
+DETAIL:  Key (identificacion)=(11111) is not present in table "empleado".
+```
+
+**Productos:**
+
+1. Repetición de clave primaria
+2. Cantidad nula
+
+```postgresql
+vivero=# SELECT * FROM PRODUCTOS;
+   nombre_producto   | cantidad 
+---------------------+----------
+ Semillas de Girasol |      200
+ Maceta              |       30
+ Abono               |      100
+ Amapolas            |       75
+(4 rows)
+
+vivero=# INSERT INTO PRODUCTOS (NOMBRE_PRODUCTO, CANTIDAD) VALUES ('Maceta', 15);
+ERROR:  duplicate key value violates unique constraint "productos_pkey"
+DETAIL:  Key (nombre_producto)=(Maceta) already exists.
+
+vivero=# INSERT INTO PRODUCTOS (NOMBRE_PRODUCTO) VALUES ('Maiz');
+ERROR:  null value in column "cantidad" of relation "productos" violates not-null constraint
+DETAIL:  Failing row contains (Maiz, null).
+```
+
+**Empleado:**
+
+1. Repetición de clave primaria
+2. Identificación errónea
+
+```postgresql
+vivero=# SELECT * FROM EMPLEADO;
+ identificacion |    nombre    
+----------------+--------------
+         234567 | Mario Soto
+         345678 | David Matías
+         567890 | Javier Gómez
+(3 rows)
+
+vivero=# INSERT INTO EMPLEADO (IDENTIFICACION, NOMBRE) VALUES (234567, 'Antonio');
+ERROR:  duplicate key value violates unique constraint "empleado_pkey"
+DETAIL:  Key (identificacion)=(234567) already exists.
+
+vivero=# INSERT INTO EMPLEADO (IDENTIFICACION, NOMBRE) VALUES (1000000, 'Antonio');
+ERROR:  new row for relation "empleado" violates check constraint "empleado_identificacion_check"
+DETAIL:  Failing row contains (1000000, Antonio).
+```
+
+**Empleado_Trabaja_Zona:**
+
+1. Repetición de claves primarias
+2. Vivero y zona no existente
+3. Identificación no existente
+4. Época del año errónea
+
+```postgresql
+vivero=# SELECT * FROM EMPLEADO_TRABAJA_ZONA;
+ nombre_vivero |  nombre_zona   | identificacion | epoca_aÑo 
+---------------+----------------+----------------+-----------
+ Santa Cruz    | Zona Este      |         234567 | Verano
+ Adeje         | Zona Sur       |         345678 | Otoño
+ La Laguna     | Zona Central   |         567890 | Primavera
+ La Laguna     | Patio Exterior |         567890 | Primavera
+(4 rows)
+
+vivero=# INSERT INTO EMPLEADO_TRABAJA_ZONA (NOMBRE_VIVERO, NOMBRE_ZONA, IDENTIFICACION, EPOCA_AÑO) VALUES ('Santa Cruz', 'Zona Este', 234567, 'Invierno');
+ERROR:  duplicate key value violates unique constraint "empleado_trabaja_zona_pkey"
+DETAIL:  Key (nombre_vivero, nombre_zona, identificacion)=(Santa Cruz, Zona Este, 234567) already exists.
+
+vivero=# INSERT INTO EMPLEADO_TRABAJA_ZONA (NOMBRE_VIVERO, NOMBRE_ZONA, IDENTIFICACION, EPOCA_AÑO) VALUES ('Las Chafiras', 'Zona Este', 234567, 'In
+vierno');
+ERROR:  insert or update on table "empleado_trabaja_zona" violates foreign key constraint "empleado_trabaja_zona_nombre_vivero_nombre_zona_fkey"
+DETAIL:  Key (nombre_vivero, nombre_zona)=(Las Chafiras, Zona Este) is not present in table "zona".
+
+vivero=# INSERT INTO EMPLEADO_TRABAJA_ZONA (NOMBRE_VIVERO, NOMBRE_ZONA, IDENTIFICACION, EPOCA_AÑO) VALUES ('Santa Cruz', 'Zona Este', 1111, 'Invier
+no');
+ERROR:  insert or update on table "empleado_trabaja_zona" violates foreign key constraint "empleado_trabaja_zona_identificacion_fkey"
+DETAIL:  Key (identificacion)=(1111) is not present in table "empleado".
+
+vivero=# INSERT INTO EMPLEADO_TRABAJA_ZONA (NOMBRE_VIVERO, NOMBRE_ZONA, IDENTIFICACION, EPOCA_AÑO) VALUES ('Santa Cruz', 'Zona Este', 567890, 'Inviersi');
+ERROR:  new row for relation "empleado_trabaja_zona" violates check constraint "empleado_trabaja_zona_epoca_aÑo_check"
+DETAIL:  Failing row contains (Santa Cruz, Zona Este, 567890, Inviersi).
+```
+
+**Zona_Produce_Productos:**
+
+1. Repetición de claves primarias
+2. Vivero y zona no existente
+3. Nombre del producto no existente
+
+```postgresql
+vivero=# SELECT * FROM ZONA_PRODUCE_PRODUCTOS;
+ nombre_vivero | nombre_zona  |   nombre_producto   
+---------------+--------------+---------------------
+ Santa Cruz    | Zona Este    | Semillas de Girasol
+ Adeje         | Zona Sur     | Abono
+ La Laguna     | Zona Central | Amapolas
+(3 rows)
+
+vivero=# INSERT INTO ZONA_PRODUCE_PRODUCTOS (NOMBRE_VIVERO, NOMBRE_ZONA, NOMBRE_PRODUCTO) VALUES ('Adeje', 'Zona Sur', 'Abono');
+ERROR:  duplicate key value violates unique constraint "zona_produce_productos_pkey"
+DETAIL:  Key (nombre_vivero, nombre_zona, nombre_producto)=(Adeje, Zona Sur, Abono) already exists.
+
+vivero=# INSERT INTO ZONA_PRODUCE_PRODUCTOS (NOMBRE_VIVERO, NOMBRE_ZONA, NOMBRE_PRODUCTO) VALUES ('Adeje', 'Zona Norte', 'Abono');
+ERROR:  insert or update on table "zona_produce_productos" violates foreign key constraint "zona_produce_productos_nombre_vivero_nombre_zona_fkey"
+DETAIL:  Key (nombre_vivero, nombre_zona)=(Adeje, Zona Norte) is not present in table "zona".
+vivero=# INSERT INTO ZONA_PRODUCE_PRODUCTOS (NOMBRE_VIVERO, NOMBRE_ZONA, NOMBRE_PRODUCTO) VALUES ('Las Galletas', 'Zona Norte', 'Abono');
+ERROR:  insert or update on table "zona_produce_productos" violates foreign key constraint "zona_produce_productos_nombre_vivero_nombre_zona_fkey"
+DETAIL:  Key (nombre_vivero, nombre_zona)=(Las Galletas, Zona Norte) is not present in table "zona".
+
+vivero=# INSERT INTO ZONA_PRODUCE_PRODUCTOS (NOMBRE_VIVERO, NOMBRE_ZONA, NOMBRE_PRODUCTO) VALUES ('Adeje', 'Zona Sur', 'Claveles');
+ERROR:  insert or update on table "zona_produce_productos" violates foreign key constraint "zona_produce_productos_nombre_producto_fkey"
+DETAIL:  Key (nombre_producto)=(Claveles) is not present in table "productos".
+```
+
+**Pedido_Contiene_Productos:**
+
+1. Repetición de claves primarias
+2. Número de pedido inexistente
+3. Nombre del producto inexistente
+
+```postgresql
+vivero=# SELECT * FROM PEDIDO_CONTIENE_PRODUCTOS;
+ numero_pedido |   nombre_producto   
+---------------+---------------------
+             2 | Semillas de Girasol
+             3 | Maceta
+             4 | Abono
+             5 | Amapolas
+(4 rows)
+
+vivero=# INSERT INTO PEDIDO_CONTIENE_PRODUCTOS (NUMERO_PEDIDO, NOMBRE_PRODUCTO) VALUES (4, 'Abono');
+ERROR:  duplicate key value violates unique constraint "pedido_contiene_productos_pkey"
+DETAIL:  Key (numero_pedido, nombre_producto)=(4, Abono) already exists.
+
+vivero=# INSERT INTO PEDIDO_CONTIENE_PRODUCTOS (NUMERO_PEDIDO, NOMBRE_PRODUCTO) VALUES (15, 'Abono');
+ERROR:  insert or update on table "pedido_contiene_productos" violates foreign key constraint "pedido_contiene_productos_numero_pedido_fkey"
+DETAIL:  Key (numero_pedido)=(15) is not present in table "pedido".
+
+vivero=# INSERT INTO PEDIDO_CONTIENE_PRODUCTOS (NUMERO_PEDIDO, NOMBRE_PRODUCTO) VALUES (2, 'Girasol');
+ERROR:  insert or update on table "pedido_contiene_productos" violates foreign key constraint "pedido_contiene_productos_nombre_producto_fkey"
+DETAIL:  Key (nombre_producto)=(Girasol) is not present in table "productos".
 ```
