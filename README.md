@@ -270,6 +270,8 @@ En cuanto al modelo relacional, hemos convertido el modelo Entidad/Relación pas
 - **Restricciones de no nulo:** Sólo los atributos que son esenciales para la identidad de las entidades y que no deben perderse con eliminaciones (p. ej., Nombre_Vivero, Nombre_Zona, Identificación) se configuran como NOT NULL.
 - **Restricciones de eliminación en cascada:** Útil para las relaciones entre Zona, Zona_Produce_Productos, y Empleado_Trabaja_Zona donde la eliminación de un vivero o zona debe propagar la eliminación.
 - **Asignación de valores nulos en caso de eliminación:** Los pedidos pueden perder referencia al cliente o empleado y quedar como históricos.
+- **Checks:** A la hora de crear las tablas hemos tenido en cuenta varias restricciones para algunos atributos que hemos cumplido gracias al uso de checks, por ejemplo la bonificación tiene que ser un valor mayor que 0, así como la cantidad en los pedidos o productos. Por otro lado tenemos también checks para que las fechas no puedan ser posteriores a la fecha del sistema. Otro caso es el check de la Época del año, que solo puede tomar como valores Primavera, Verano, Otoño e Invierno. Por último la identificación es un número entre 0 y 999999
+- **Disparadores:** Para el **atributo calculado** he creado un disparador que calcula la suma de los pedidos realizados por el cliente el mes en el que nos encontramos (el del sistema) y lo multiplica por 0.01, siendo el máximo valor un 1.0 (que es lo mismo que un 100% de bonificación). Cada vez que se añade una nueva entrada a la tabla de pedido se ejecuta este disparador. También creé un disparador que pone la bonificación de los nuevos cliente a 0, independientemente de si el usuario ha creado al cliente con una bonificación inicial de 1. Por último creé otro disparador que obliga a que la fecha del pedido no pueda ser menor a la fecha de ingreso del cliente en la base de datos.
 
 ## Eliminaciones en la base de Datos
 
@@ -427,7 +429,7 @@ vivero=# SELECT * FROM ZONA_PRODUCE_PRODUCTOS;
 (3 rows)
 ```
 
-Ahora vamos a eliminar a uno de los empleados para que veamos como en pedidos se mantiene el histórico del pedido, es decir, que no se elimina.
+- Ahora vamos a eliminar a uno de los empleados para que veamos como en pedidos se mantiene el histórico del pedido, es decir, que no se elimina.
 
 **Eliminación de un Empleado:**
 
