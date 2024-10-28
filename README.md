@@ -160,13 +160,13 @@ En cuanto al modelo relacional, hemos convertido el modelo Entidad/Relación pas
   - CHECK (Cantidad > 0)
 - **DNI**:
   - FOREIGN KEY de ClientesPlus(DNI)
-  - NOT NULL
+  - NULL
   - ON DELETE SET NULL
   - ON UPDATE CASCADE
   - CHAR(9)
 - **Identificación**:
   - FOREIGN KEY de Empleado(Identificación)
-  - NOT NULL
+  - NULL
   - ON DELETE SET NULL
   - INTEGER
 
@@ -215,7 +215,7 @@ En cuanto al modelo relacional, hemos convertido el modelo Entidad/Relación pas
   - PRIMARY KEY
   - FOREIGN KEY de Empleado(Identificación)
   - NOT NULL
-  - ON DELETE SET NULL
+  - ON DELETE CASCADE
   - ON UPDATE CASCADE
   - INTEGER
 - **Época_Año**:
@@ -262,7 +262,7 @@ En cuanto al modelo relacional, hemos convertido el modelo Entidad/Relación pas
   - PRIMARY KEY
   - FOREIGN KEY de Productos(Nombre_Producto)
   - NOT NULL
-  - ON DELETE SET NULL
+  - ON DELETE CASCADE
   - ON UPDATE CASCADE
   - VARCHAR(100)
 
@@ -273,7 +273,33 @@ En cuanto al modelo relacional, hemos convertido el modelo Entidad/Relación pas
 
 ## Eliminaciones en la base de Datos
 
+- En la base de datos hemos eliminado uno de los viveros y vemos como esta eliminación se propaga hacia las demás tablas debido a la eliminación en cascada.
+
+**Eliminación de un vivero:**
+
 ```postgresql
+vivero=# SELECT * FROM ZONA_PRODUCE_PRODUCTOS;
+   nombre_vivero   | nombre_zona  |   nombre_producto   
+-------------------+--------------+---------------------
+ La Orotava        | Zona Norte   | Tierra
+ Santa Cruz        | Zona Este    | Semillas de Girasol
+ Adeje             | Zona Sur     | Abono
+ Puerto de la Cruz | Zona Oeste   | Maceta
+ La Laguna         | Zona Central | Amapolas
+(5 rows)
+
+vivero=# SELECT * FROM EMPLEADO_TRABAJA_ZONA;
+   nombre_vivero   |  nombre_zona   | identificacion | epoca_aÑo 
+-------------------+----------------+----------------+-----------
+ La Orotava        | Zona Norte     |         123456 | Primavera
+ Santa Cruz        | Zona Este      |         123456 | Invierno
+ Santa Cruz        | Zona Este      |         234567 | Verano
+ Adeje             | Zona Sur       |         345678 | Otoño
+ Puerto de la Cruz | Zona Oeste     |         456789 | Invierno
+ La Laguna         | Zona Central   |         567890 | Primavera
+ La Laguna         | Patio Exterior |         567890 | Primavera
+(7 rows)
+
 vivero=# SELECT * FROM ZONA;
    nombre_vivero   |  nombre_zona   | latitud_zona | longitud_zona 
 -------------------+----------------+--------------+---------------
@@ -315,4 +341,229 @@ vivero=# SELECT * FROM ZONA;
  La Laguna     | Zona Central   |   28.4880000 |   -16.3140000
  La Laguna     | Patio Exterior |   28.4870000 |   -16.4000000
 (5 rows)
+
+vivero=# SELECT * FROM ZONA_PRODUCE_PRODUCTOS;
+ nombre_vivero | nombre_zona  |   nombre_producto   
+---------------+--------------+---------------------
+ La Orotava    | Zona Norte   | Tierra
+ Santa Cruz    | Zona Este    | Semillas de Girasol
+ Adeje         | Zona Sur     | Abono
+ La Laguna     | Zona Central | Amapolas
+(4 rows)
+
+vivero=# SELECT * FROM EMPLEADO_TRABAJA_ZONA;
+ nombre_vivero |  nombre_zona   | identificacion | epoca_aÑo 
+---------------+----------------+----------------+-----------
+ La Orotava    | Zona Norte     |         123456 | Primavera
+ Santa Cruz    | Zona Este      |         123456 | Invierno
+ Santa Cruz    | Zona Este      |         234567 | Verano
+ Adeje         | Zona Sur       |         345678 | Otoño
+ La Laguna     | Zona Central   |         567890 | Primavera
+ La Laguna     | Patio Exterior |         567890 | Primavera
+(6 rows)
+```
+
+- Ahora vamos a eliminar uno de los productos para ver como esta eliminación se propaga por todas las tablas en cascada.
+
+**Eliminación de un producto:**
+
+```postgresql
+vivero=# SELECT * FROM PEDIDO_CONTIENE_PRODUCTOS;
+ numero_pedido |   nombre_producto   
+---------------+---------------------
+             1 | Tierra
+             2 | Semillas de Girasol
+             3 | Maceta
+             4 | Abono
+             5 | Amapolas
+             6 | Tierra
+(6 rows)
+
+vivero=# SELECT * FROM ZONA_PRODUCE_PRODUCTOS;
+ nombre_vivero | nombre_zona  |   nombre_producto   
+---------------+--------------+---------------------
+ La Orotava    | Zona Norte   | Tierra
+ Santa Cruz    | Zona Este    | Semillas de Girasol
+ Adeje         | Zona Sur     | Abono
+ La Laguna     | Zona Central | Amapolas
+(4 rows)
+
+vivero=# SELECT * FROM PRODUCTOS;
+   nombre_producto   | cantidad 
+---------------------+----------
+ Tierra              |       50
+ Semillas de Girasol |      200
+ Maceta              |       30
+ Abono               |      100
+ Amapolas            |       75
+(5 rows)
+
+vivero=# DELETE FROM PRODUCTOS WHERE NOMBRE_PRODUCTO = 'Tierra';
+DELETE 1
+vivero=# SELECT * FROM PRODUCTOS;
+   nombre_producto   | cantidad 
+---------------------+----------
+ Semillas de Girasol |      200
+ Maceta              |       30
+ Abono               |      100
+ Amapolas            |       75
+(4 rows)
+
+vivero=# SELECT * FROM PEDIDO_CONTIENE_PRODUCTOS;
+ numero_pedido |   nombre_producto   
+---------------+---------------------
+             2 | Semillas de Girasol
+             3 | Maceta
+             4 | Abono
+             5 | Amapolas
+(4 rows)
+
+vivero=# SELECT * FROM ZONA_PRODUCE_PRODUCTOS;
+ nombre_vivero | nombre_zona  |   nombre_producto   
+---------------+--------------+---------------------
+ Santa Cruz    | Zona Este    | Semillas de Girasol
+ Adeje         | Zona Sur     | Abono
+ La Laguna     | Zona Central | Amapolas
+(3 rows)
+```
+
+Ahora vamos a eliminar a uno de los empleados para que veamos como en pedidos se mantiene el histórico del pedido, es decir, que no se elimina.
+
+**Eliminación de un Empleado:**
+
+```postgresql
+vivero=# SELECT * FROM PEDIDO;
+ numero_pedido |   fecha    | cantidad |    dni    | identificacion 
+---------------+------------+----------+-----------+----------------
+             1 | 2022-06-05 |       15 | 44332211D |         456789
+             2 | 2023-07-10 |       20 | 11223344C |         345678
+             3 | 2023-10-02 |        8 | 55667788E |         567890
+             4 | 2024-10-17 |       10 | 12345678A |         123456
+             5 | 2024-10-27 |        5 | 87654321B |         234567
+             6 | 2024-10-28 |        3 | 12345678A |         123456
+(6 rows)
+
+vivero=# SELECT * FROM EMPLEADO;
+ identificacion |    nombre    
+----------------+--------------
+         123456 | Manuel Noda
+         234567 | Mario Soto
+         345678 | David Matías
+         456789 | Elena Ruiz
+         567890 | Javier Gómez
+(5 rows)
+
+vivero=# DELETE FROM EMPLEADO WHERE IDENTIFICACION = 456789;
+DELETE 1
+vivero=# SELECT * FROM EMPLEADO;
+ identificacion |    nombre    
+----------------+--------------
+         123456 | Manuel Noda
+         234567 | Mario Soto
+         345678 | David Matías
+         567890 | Javier Gómez
+(4 rows)
+
+vivero=# SELECT * FROM PEDIDO;
+ numero_pedido |   fecha    | cantidad |    dni    | identificacion 
+---------------+------------+----------+-----------+----------------
+             2 | 2023-07-10 |       20 | 11223344C |         345678
+             3 | 2023-10-02 |        8 | 55667788E |         567890
+             4 | 2024-10-17 |       10 | 12345678A |         123456
+             5 | 2024-10-27 |        5 | 87654321B |         234567
+             6 | 2024-10-28 |        3 | 12345678A |         123456
+             1 | 2022-06-05 |       15 | 44332211D |               
+(6 rows)
+```
+
+También pasa lo mismo con la tabla de Empleado_Trabaja_Zona
+
+```postgresql
+vivero=# SELECT * FROM EMPLEADO_TRABAJA_ZONA;
+ nombre_vivero |  nombre_zona   | identificacion | epoca_aÑo 
+---------------+----------------+----------------+-----------
+ La Orotava    | Zona Norte     |         123456 | Primavera
+ Santa Cruz    | Zona Este      |         123456 | Invierno
+ Santa Cruz    | Zona Este      |         234567 | Verano
+ Adeje         | Zona Sur       |         345678 | Otoño
+ La Laguna     | Zona Central   |         567890 | Primavera
+ La Laguna     | Patio Exterior |         567890 | Primavera
+(6 rows)
+
+vivero=# SELECT * FROM EMPLEADO;
+ identificacion |    nombre    
+----------------+--------------
+         123456 | Manuel Noda
+         234567 | Mario Soto
+         345678 | David Matías
+         567890 | Javier Gómez
+(4 rows)
+
+vivero=# DELETE FROM EMPLEADO WHERE IDENTIFICACION = 123456;
+DELETE 1
+vivero=# SELECT * FROM EMPLEADO;
+ identificacion |    nombre    
+----------------+--------------
+         234567 | Mario Soto
+         345678 | David Matías
+         567890 | Javier Gómez
+(3 rows)
+
+vivero=# SELECT * FROM EMPLEADO_TRABAJA_ZONA;
+ nombre_vivero |  nombre_zona   | identificacion | epoca_aÑo 
+---------------+----------------+----------------+-----------
+ Santa Cruz    | Zona Este      |         234567 | Verano
+ Adeje         | Zona Sur       |         345678 | Otoño
+ La Laguna     | Zona Central   |         567890 | Primavera
+ La Laguna     | Patio Exterior |         567890 | Primavera
+(4 rows)
+```
+
+- Por último veamos como si eliminamos a un cliente, su DNI pasa a ser nulo en la tabla de pedidos pues de esta manera mantenemos el registro de que se realizó una compra
+
+**Eliminación de un cliente:**
+
+```postgresql
+vivero=# SELECT * FROM CLIENTESPLUS;
+    dni    |     nombre      | fecha_ingreso | bonificacion 
+-----------+-----------------+---------------+--------------
+ 11223344C | Daniel Azañón   | 2021-12-01    |         0.00
+ 55667788E | Luis Fernández  | 2023-10-01    |         0.00
+ 87654321B | Aday Cuesta     | 2024-10-25    |         0.05
+ 44332211D | Ana Martínez    | 2020-03-25    |         0.00
+ 12345678A | Daniel Carvajal | 2024-10-15    |         0.13
+(5 rows)
+
+vivero=# SELECT * FROM PEDIDO;
+ numero_pedido |   fecha    | cantidad |    dni    | identificacion 
+---------------+------------+----------+-----------+----------------
+             2 | 2023-07-10 |       20 | 11223344C |         345678
+             3 | 2023-10-02 |        8 | 55667788E |         567890
+             5 | 2024-10-27 |        5 | 87654321B |         234567
+             1 | 2022-06-05 |       15 | 44332211D |               
+             4 | 2024-10-17 |       10 | 12345678A |               
+             6 | 2024-10-28 |        3 | 12345678A |               
+(6 rows)
+
+vivero=# DELETE FROM CLIENTESPLUS WHERE NOMBRE = 'Ana Martínez';
+DELETE 1
+vivero=# SELECT * FROM CLIENTESPLUS;
+    dni    |     nombre      | fecha_ingreso | bonificacion 
+-----------+-----------------+---------------+--------------
+ 11223344C | Daniel Azañón   | 2021-12-01    |         0.00
+ 55667788E | Luis Fernández  | 2023-10-01    |         0.00
+ 87654321B | Aday Cuesta     | 2024-10-25    |         0.05
+ 12345678A | Daniel Carvajal | 2024-10-15    |         0.13
+(4 rows)
+
+vivero=# SELECT * FROM PEDIDO;
+ numero_pedido |   fecha    | cantidad |    dni    | identificacion 
+---------------+------------+----------+-----------+----------------
+             2 | 2023-07-10 |       20 | 11223344C |         345678
+             3 | 2023-10-02 |        8 | 55667788E |         567890
+             5 | 2024-10-27 |        5 | 87654321B |         234567
+             4 | 2024-10-17 |       10 | 12345678A |               
+             6 | 2024-10-28 |        3 | 12345678A |               
+             1 | 2022-06-05 |       15 |           |               
+(6 rows)
 ```
