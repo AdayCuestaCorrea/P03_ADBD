@@ -95,12 +95,12 @@ En cuanto al modelo relacional, hemos convertido el modelo Entidad/Relación pas
   - NOT NULL
   - NUMERIC(10, 7)
   - CHECK (LATITUD_VIVERO BETWEEN -90 AND 90)
-  - Unique
+  - UNIQUE
 - **Longitud_Vivero**: 
   - NOT NULL
   - NUMERIC(10, 7)
   - CHECK (LONGITUD_VIVERO BETWEEN -180 AND 180)
-  - Unique
+  - UNIQUE
 
 ---
 
